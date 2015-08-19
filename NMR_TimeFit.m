@@ -142,7 +142,7 @@ classdef NMR_TimeFit < NMR_Fit
                 % this should go faster
                 
                 % Put all components into a single matrix
-                guess = [obj.area.*exp(1i*obj.phase); 1i*2*pi*obj.freq-pi*obj.fwhm];
+                guess = [obj.area.*exp(1i*pi*obj.phase/180); 1i*2*pi*obj.freq-pi*obj.fwhm];
                                 
                 fit_params = lsqcurvefit(@obj.calcUnconstrainedTimeSig,guess,obj.t,...
                     obj.timeDomainSignal,[],[],fitoptions);
@@ -191,7 +191,7 @@ classdef NMR_TimeFit < NMR_Fit
             nComp = size(nmr_params,2);
             complexSig = zeros(size(t));
             for iComp = 1:nComp
-                complexSig = complexSig + exp(nmr_params(1,iComp)+nmr_params(2,iComp)*t);
+                complexSig = complexSig + nmr_params(1,iComp).*exp(nmr_params(2,iComp)*t);
             end
         end
         
