@@ -36,6 +36,7 @@ nmrFit = nmrFit.autoAddComponents(3);
 % Describe and show the fit
 disp('Fits without any guessses:');
 nmrFit.describe();
+figure();
 nmrFit.plotFit();
 
 %% Fitting Option 2 (works well when you have little prior knowledge)
@@ -47,6 +48,7 @@ nmrFit2 = nmrFit2.fitTool();
 % Describe and show the fit
 disp('Fits using fitTool:');
 nmrFit2.describe();
+figure();
 nmrFit2.plotFit();
 
 %% Fitting Option 3 (works really well, but requires prior knowledge)
@@ -65,6 +67,7 @@ nmrFit3 = nmrFit3.fitTimeDomainSignal();
 % Describe and show the fit
 disp('Fits with reasonable guessses:');
 nmrFit3.describe();
+figure();
 nmrFit3.plotFit();
 
 %% Fitting Option 4 (best, but requires lots of prior knowledge)
@@ -107,7 +110,7 @@ nmrFit3 = nmrFit3.fitTimeDomainSignal();
 % Describe and show the fit
 disp('Fits with reasonable guessses and constraints:');
 nmrFit3.describe();
+figure()
 nmrFit3.plotFit();
-
 % Note that the these methods often agree well with high SNR data, but be 
 % aware that the automatic fitting sometimes has trouble "finding" a peak
