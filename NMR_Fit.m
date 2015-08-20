@@ -68,6 +68,26 @@ classdef NMR_Fit < NMR_Mix
             if(any(obj.ub < obj.lb))
                 error('Impossible constraint set.');
             end
+            if(any(obj.area < obj.lb(1,:)) | any(obj.area > obj.ub(1,:)))
+                error('Bad area bound');
+                lbbad = obj.area < obj.lb(1,:)
+                ubbad = obj.area > obj.ub(1,:)
+            end
+            if(any(obj.freq < obj.lb(2,:)) | any(obj.freq > obj.ub(2,:)))
+                lbbad = obj.freq < obj.lb(2,:)
+                ubbad = obj.freq > obj.ub(3,:)
+                error('Bad freq bound');
+            end
+            if(any(obj.fwhm < obj.lb(3,:)) | any(obj.fwhm > obj.ub(3,:)))
+                lbbad = obj.fwhm < obj.lb(3,:)
+                ubbad = obj.fwhm > obj.ub(3,:)
+                error('Bad fwhm bound');
+            end
+            if(any(obj.phase < obj.lb(4,:)) | any(obj.phase > obj.ub(4,:)))
+                lbbad = obj.phase < obj.lb(4,:)
+                ubbad = obj.phase > obj.ub(4,:)
+                error('Bad phase bound');
+            end
         end
         
         function describe(obj)
