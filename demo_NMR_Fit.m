@@ -10,6 +10,7 @@ freq = [400 30 -4E3];   %Hz
 fwhm = [300 200 100];   %Hz
 phase = [75 -40 0];     %deg
 nmrMix = NMR_Mix(area, freq, fwhm, phase);
+%test
 
 % Simulate the noiseless time domain signal
 dwell_time = 62E-6; %sec
