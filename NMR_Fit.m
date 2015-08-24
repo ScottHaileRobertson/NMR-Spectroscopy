@@ -75,7 +75,7 @@ classdef NMR_Fit < NMR_Mix
             end
             if(any(obj.freq < obj.lb(2,:)) | any(obj.freq > obj.ub(2,:)))
                 lbbad = obj.freq < obj.lb(2,:)
-                ubbad = obj.freq > obj.ub(3,:)
+                ubbad = obj.freq > obj.ub(2,:)
                 error('Bad freq bound');
             end
             if(any(obj.fwhm < obj.lb(3,:)) | any(obj.fwhm > obj.ub(3,:)))
