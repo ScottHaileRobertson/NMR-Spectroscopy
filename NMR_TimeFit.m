@@ -200,6 +200,8 @@ classdef NMR_TimeFit < NMR_Fit
             % fitting. This is the same as calling calcTimeDomainSignal of
             % the NMR_Mix object, only it separates the real and imaginary
             % parts to allow for constraints to be used in fitting.
+            nComp = numel(nmr_params)/4;
+            nmr_params = reshape(nmr_params,[4 nComp]);
             tmpNmrMix = NMR_Mix(nmr_params(1,:), nmr_params(2,:), ...
                 nmr_params(3,:), nmr_params(4,:));
             complexSig = tmpNmrMix.calcTimeDomainSignal(t);
