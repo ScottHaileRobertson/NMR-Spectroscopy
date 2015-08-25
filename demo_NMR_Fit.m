@@ -4,7 +4,7 @@
 %
 
 % Create a model of a 3 component system, providing the area (intensity),
-% frequncy, fwhm, and phase of each component
+% frequency, fwhm, and phase of each component
 area = [10 10 10];      %arbs
 freq = [400 30 -4E3];   %Hz
 fwhm = [300 200 100];   %Hz
@@ -71,7 +71,7 @@ figure();
 nmrFit3.plotFit();
 
 %% Fitting Option 4 (best, but requires lots of prior knowledge)
-% We can also constrain the fits to only allow parameterst to vary within
+% We can also constrain the fits to only allow parameters to vary within
 % a certain range. If the algorithm keeps missing peaks, you can constrain
 % it and often get better results
 disp('Using automated fitting with decent starting guesses...')
