@@ -146,7 +146,7 @@ classdef NMR_Mix < handle
             for iComp=1:nComp
                 componentLorentzianCurves(:,iComp) = ...
                     (obj.area(iComp).*pi*obj.fwhm(iComp))./...
-                    ((2*pi*(obj.freq(iComp)-f)).^2+pi*obj.fwhm(iComp)^2);
+                    ((2*pi*(obj.freq(iComp)-f)).^2+(pi*obj.fwhm(iComp))^2);
             end
         end
         
@@ -163,7 +163,7 @@ classdef NMR_Mix < handle
             for iComp=1:nComp
                 lorentzianCurves = lorentzianCurves + ...
                     (obj.area(iComp).*pi*obj.fwhm(iComp))./...
-                    ((2*pi*(obj.freq(iComp)-f)).^2+pi*obj.fwhm(iComp)^2);
+                    ((2*pi*(obj.freq(iComp)-f)).^2+(pi*obj.fwhm(iComp))^2);
             end
         end
         
