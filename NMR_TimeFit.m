@@ -209,9 +209,14 @@ classdef NMR_TimeFit < NMR_Fit
         end
         
         function ax1 = plotFit(obj)
-            % Calculate fitted and residual spectrums
-            individualSpectrums = obj.calcComponentSpectralDomainSignal(obj.f);
-            fittedSpectrum = obj.calcSpectralDomainSignal(obj.f);
+            % Calculate fitted and residual spectrums usign time domain
+            % signal so that amplitudes are correct even if signal is
+            % truncated at the end
+            dwell_time = (obj.t(2)-obj.t(1));
+            fittedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(obj.t)));
+            individualSpectrums = dwell_time*fftshift(fft(obj.calcComponentTimeDomainSignal(obj.t),[],1),1);
+%             individualSpectrums = obj.calcComponentSpectralDomainSignal(obj.f);
+%             fittedSpectrum = obj.calcSpectralDomainSignal(obj.f);
             residualSpectrum = obj.spectralDomainSignal - fittedSpectrum;
             
             % Calculate lorentzian curves for each component
