@@ -213,15 +213,23 @@ classdef NMR_TimeFit < NMR_Fit
             % signal so that amplitudes are correct even if signal is
             % truncated at the end
             dwell_time = (obj.t(2)-obj.t(1));
-            fittedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(obj.t)));
-            individualSpectrums = dwell_time*fftshift(fft(obj.calcComponentTimeDomainSignal(obj.t),[],1),1);
-%             individualSpectrums = obj.calcComponentSpectralDomainSignal(obj.f);
-%             fittedSpectrum = obj.calcSpectralDomainSignal(obj.f);
+            zeroPaddedTime = min(obj.t(:)) + dwell_time*(1:obj.zeroPadSize)';
+            
+             % Calculate spectrum
+            dwell_time = (zeroPaddedTime(2)-zeroPaddedTime(1));
+            zeroPaddedFreq = linspace(-0.5,0.5,obj.zeroPadSize+1)/dwell_time;
+            zeroPaddedFreq = zeroPaddedFreq(1:(end-1)); % Take off last sample to have nSamples  
+            zeroPaddedFreq = zeroPaddedFreq(:); % Make a column vector
+            
+            fittedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(zeroPaddedTime)));
+            individualSpectrums = dwell_time*fftshift(fft(obj.calcComponentTimeDomainSignal(zeroPaddedTime),[],1),1);
+%             individualSpectrums = obj.calcComponentSpectralDomainSignal(zeroPaddedFreq);
+%             fittedSpectrum = obj.calcSpectralDomainSignal(zeroPaddedFreq);
             residualSpectrum = obj.spectralDomainSignal - fittedSpectrum;
             
             % Calculate lorentzian curves for each component
             nComponents = length(obj.area);
-            fMat = repmat(obj.f,[1 nComponents]);
+            fMat = repmat(zeroPaddedFreq,[1 nComponents]);
             
             legendStrings = cell(1, nComponents);
             for iComp=1:nComponents
@@ -229,46 +237,46 @@ classdef NMR_TimeFit < NMR_Fit
             end
             
             % Show results to user
-            ax2 = subplot(5,1,2);
-            plot(obj.f,abs(obj.spectralDomainSignal),'-b');
+            ax2 = subplot(4,1,2);
+            plot(zeroPaddedFreq,abs(obj.spectralDomainSignal),'-b');
             hold on;
-            plot(obj.f,abs(fittedSpectrum),'-g');
-            plot(obj.f,abs(residualSpectrum),'-r');
+            plot(zeroPaddedFreq,abs(fittedSpectrum),'-g');
+            plot(zeroPaddedFreq,abs(residualSpectrum),'-r');
             hold off;
             ylabel('Magnitude Intensity');
             set(ax2,'xticklabel',{[]}) ;
             set(ax2,'XDir','reverse');
             
-            ax3 = subplot(5,1,3);
-            phaseSig = angle(obj.spectralDomainSignal);
-            phaseFit = angle(fittedSpectrum);
-            phaseDelta = phaseSig - phaseFit;
-            plot(obj.f, unwrap(phaseSig),'-b');
-            hold on;
-            plot(obj.f,unwrap(phaseFit),'-g');
-            plot(obj.f,unwrap(phaseDelta),'-r');
-            plot(obj.f,unwrap(angle(residualSpectrum)),'-c');
+%             ax3 = subplot(5,1,3);
+%             phaseSig = angle(obj.spectralDomainSignal);
+%             phaseFit = angle(fittedSpectrum);
+%             phaseDelta = phaseSig - phaseFit;
+%             plot(zeroPaddedFreq, unwrap(phaseSig),'-b');
+%             hold on;
+%             plot(zeroPaddedFreq,unwrap(phaseFit),'-g');
+%             plot(zeroPaddedFreq,unwrap(phaseDelta),'-r');
+%             plot(zeroPaddedFreq,unwrap(angle(residualSpectrum)),'-c');
+%             
+%             hold off;
+%             ylabel('Phase (Radians)');
+%             set(ax3,'xticklabel',{[]}) ;
+%             set(ax3,'XDir','reverse');
             
-            hold off;
-            ylabel('Phase (Radians)');
-            set(ax3,'xticklabel',{[]}) ;
-            set(ax3,'XDir','reverse');
-            
-            ax4 = subplot(5,1,4);
-            plot(obj.f,real(obj.spectralDomainSignal),'-b');
+            ax4 = subplot(4,1,3);
+            plot(zeroPaddedFreq,real(obj.spectralDomainSignal),'-b');
             hold on;
-            plot(obj.f,real(fittedSpectrum),'-g');
-            plot(obj.f,real(residualSpectrum),'-r');
+            plot(zeroPaddedFreq,real(fittedSpectrum),'-g');
+            plot(zeroPaddedFreq,real(residualSpectrum),'-r');
             hold off;
             ylabel('Real Intensity');
             set(ax4,'xticklabel',{[]});
             set(ax4,'XDir','reverse');
             
-            ax5 = subplot(5,1,5);
-            plot(obj.f,imag(obj.spectralDomainSignal),'-b');
+            ax5 = subplot(4,1,4);
+            plot(zeroPaddedFreq,imag(obj.spectralDomainSignal),'-b');
             hold on;
-            plot(obj.f,imag(fittedSpectrum),'-g');
-            plot(obj.f,imag(residualSpectrum),'-r');
+            plot(zeroPaddedFreq,imag(fittedSpectrum),'-g');
+            plot(zeroPaddedFreq,imag(residualSpectrum),'-r');
             hold off;
             xlabel('Spectral Frequency (Hz)');
             ylabel('Imaginary Intensity');
@@ -284,7 +292,7 @@ classdef NMR_TimeFit < NMR_Fit
             %
             %                 ax1 = axes('Position',get(ax1ppm,'Position'));
             %             else
-            ax1 = subplot(5,1,1);
+            ax1 = subplot(4,1,1);
             %             end
             
             plot(fMat,real(individualSpectrums));
@@ -297,7 +305,7 @@ classdef NMR_TimeFit < NMR_Fit
             %             end
             
             % Keep all x axes in sinc
-            linkaxes([ax1,ax2,ax3,ax4 ax5],'x');
+            linkaxes([ax1,ax2,ax4 ax5],'x');
             
             %             if(~isempty(obj.fref))
             %                 % Initialize XLim in correct units
@@ -312,13 +320,15 @@ classdef NMR_TimeFit < NMR_Fit
         
         function ax1 = plotTimeFit(obj)
             % Calculate fitted and residual spectrums
-            individualSpectrums = obj.calcComponentTimeDomainSignal(obj.t);
-            fittedSpectrum = obj.calcTimeDomainSignal(obj.t);
-            residualSpectrum = obj.timeDomainSignal - fittedSpectrum;
+            dwell_time = (obj.t(2)-obj.t(1));
+            zeroPaddedTime = min(obj.t(:)) + dwell_time*(1:obj.zeroPadSize)';
+            individualSignals = obj.calcComponentTimeDomainSignal(zeroPaddedTime);
+            fittedSignal = obj.calcTimeDomainSignal(zeroPaddedTime);
+            residualSignal = obj.timeDomainSignal - fittedSignal;
             
             % Calculate lorentzian curves for each component
             nComponents = length(obj.area);
-            fMat = repmat(obj.t,[1 nComponents]);
+            fMat = repmat(zeroPaddedTime,[1 nComponents]);
             
             legendStrings = cell(1, nComponents);
             for iComp=1:nComponents
@@ -326,50 +336,46 @@ classdef NMR_TimeFit < NMR_Fit
             end
             
             % Show results to user
-            ax2 = subplot(5,1,2);
-            plot(obj.t,abs(obj.timeDomainSignal),'-b');
+            ax2 = subplot(4,1,2);
+            plot(zeroPaddedTime,abs(obj.timeDomainSignal),'-b');
             hold on;
-            plot(obj.t,abs(fittedSpectrum),'-g');
-            plot(obj.t,abs(residualSpectrum),'-r');
+            plot(zeroPaddedTime,abs(fittedSignal),'-g');
+            plot(zeroPaddedTime,abs(residualSignal),'-r');
             hold off;
             ylabel('Magnitude Intensity');
             set(ax2,'xticklabel',{[]}) ;
-            set(ax2,'XDir','reverse');
             
-            ax3 = subplot(5,1,3);
-            phaseSig = angle(obj.timeDomainSignal);
-            phaseFit = angle(fittedSpectrum);
-            phaseDelta = phaseSig - phaseFit;
-            plot(obj.t, phaseSig,'-b');
+%             ax3 = subplot(5,1,3);
+%             phaseSig = angle(zeroPaddedTimeimeDomainSignal);
+%             phaseFit = angle(fittedSignal);
+%             phaseDelta = phaseSig - phaseFit;
+%             plot(zeroPaddedTime, phaseSig,'-b');
+%             hold on;
+%             plot(zeroPaddedTime,phaseFit,'-g');
+%             plot(zeroPaddedTime,phaseDelta,'-r');
+%             
+%             hold off;
+%             ylabel('Phase (Radians)');
+%             set(ax3,'xticklabel',{[]}) ;
+            
+            ax4 = subplot(4,1,3);
+            plot(zeroPaddedTime,real(obj.timeDomainSignal),'-b');
             hold on;
-            plot(obj.t,phaseFit,'-g');
-            plot(obj.t,phaseDelta,'-r');
-            
-            hold off;
-            ylabel('Phase (Radians)');
-            set(ax3,'xticklabel',{[]}) ;
-            set(ax3,'XDir','reverse');
-            
-            ax4 = subplot(5,1,4);
-            plot(obj.t,real(obj.timeDomainSignal),'-b');
-            hold on;
-            plot(obj.t,real(fittedSpectrum),'-g');
-            plot(obj.t,real(residualSpectrum),'-r');
+            plot(zeroPaddedTime,real(fittedSignal),'-g');
+            plot(zeroPaddedTime,real(residualSignal),'-r');
             hold off;
             ylabel('Real Intensity');
             set(ax4,'xticklabel',{[]});
-            set(ax4,'XDir','reverse');
             
-            ax5 = subplot(5,1,5);
-            plot(obj.t,imag(obj.timeDomainSignal),'-b');
+            ax5 = subplot(4,1,4);
+            plot(zeroPaddedTime,imag(obj.timeDomainSignal),'-b');
             hold on;
-            plot(obj.t,imag(fittedSpectrum),'-g');
-            plot(obj.t,imag(residualSpectrum),'-r');
+            plot(zeroPaddedTime,imag(fittedSignal),'-g');
+            plot(zeroPaddedTime,imag(residualSignal),'-r');
             hold off;
-            xlabel('Spectral Frequency (Hz)');
+            xlabel('Time');
             ylabel('Imaginary Intensity');
             legend('Measured','Fitted','Residual');
-            set(ax5,'XDir','reverse');
             
             %             if(~isempty(obj.fref))
             %                 % Add PPM axis
@@ -380,20 +386,19 @@ classdef NMR_TimeFit < NMR_Fit
             %
             %                 ax1 = axes('Position',get(ax1ppm,'Position'));
             %             else
-            ax1 = subplot(5,1,1);
+            ax1 = subplot(4,1,1);
             %             end
             
-            plot(fMat,real(individualSpectrums));
+            plot(fMat,real(individualSignals));
             legend(legendStrings);
             ylabel('Component Intensity');
             set(ax1,'xticklabel',{[]}) ;
-            set(ax1,'XDir','reverse');
             %             if(~isempty(obj.fref))
             %                 set(ax1ppm,'XDir','reverse');
             %             end
             
             % Keep all x axes in sinc
-            linkaxes([ax1,ax2,ax3,ax4 ax5],'x');
+            linkaxes([ax1,ax2,ax4 ax5],'x');
             
             %             if(~isempty(obj.fref))
             %                 % Initialize XLim in correct units
