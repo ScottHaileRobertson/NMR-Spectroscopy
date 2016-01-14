@@ -213,10 +213,9 @@ classdef NMR_TimeFit < NMR_Fit
             % signal so that amplitudes are correct even if signal is
             % truncated at the end
             dwell_time = (obj.t(2)-obj.t(1));
-            zeroPaddedTime = min(obj.t(:)) + dwell_time*(1:obj.zeroPadSize)';
+            zeroPaddedTime = min(obj.t(:)) + dwell_time*((1:obj.zeroPadSize)-1)';
             
              % Calculate spectrum
-            dwell_time = (zeroPaddedTime(2)-zeroPaddedTime(1));
             zeroPaddedFreq = linspace(-0.5,0.5,obj.zeroPadSize+1)/dwell_time;
             zeroPaddedFreq = zeroPaddedFreq(1:(end-1)); % Take off last sample to have nSamples  
             zeroPaddedFreq = zeroPaddedFreq(:); % Make a column vector
@@ -321,7 +320,7 @@ classdef NMR_TimeFit < NMR_Fit
         function ax1 = plotTimeFit(obj)
             % Calculate fitted and residual spectrums
             dwell_time = (obj.t(2)-obj.t(1));
-            zeroPaddedTime = min(obj.t(:)) + dwell_time*(1:obj.zeroPadSize)';
+            zeroPaddedTime = min(obj.t(:)) + dwell_time*((1:obj.zeroPadSize)-1)';
             individualSignals = obj.calcComponentTimeDomainSignal(zeroPaddedTime);
             fittedSignal = obj.calcTimeDomainSignal(zeroPaddedTime);
             residualSignal = obj.timeDomainSignal - fittedSignal;
