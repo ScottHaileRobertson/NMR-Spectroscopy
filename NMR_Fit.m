@@ -14,6 +14,12 @@ classdef NMR_Fit < NMR_Mix
         spectralDomainSignal;
         zeroPadSize;
         lineBroadening;
+        
+        % 95% confidence interval
+        ci_area; % 95% confidence interval of area
+        ci_freq; % 95% confidence interval of frequency
+        ci_fwhm; % 95% confidence interval of FWHM
+        ci_phase; % 95% confidence interval of phase
     end
     
     methods
@@ -51,15 +57,92 @@ classdef NMR_Fit < NMR_Mix
             
             % Calculate freq samples
             obj.f = linspace(-0.5,0.5,obj.zeroPadSize+1)/dwell_time;
-            obj.f = obj.f(1:(end-1)); % Take off last sample to have nSamples  
+            obj.f = obj.f(1:(end-1)); % Take off last sample to have nSamples
             obj.f = obj.f(:); % Make a column vector
+            
+            %Delete confidence intervals if they exist
+            obj.ci_area = [];
+            obj.ci_freq = [];
+            obj.ci_fwhm = [];
+            obj.ci_phase = [];
+        end
+        
+        function obj = resetComponents(obj,area, frequency, fwhm, phase, varargin)
+            % Resets component(s) to NMR_Mix object, then resorts to keep
+            % frequencies in order
+            obj.area = area(:)';
+            obj.freq = frequency(:)';
+            obj.fwhm = fwhm(:)';
+            obj.phase = phase(:)';
+            
+            % reset confidence intervals
+            if(nargin > 5)
+                obj.ci_area = varargin{1};
+                obj.ci_freq = varargin{2};
+                obj.ci_fwhm = varargin{3};
+                obj.ci_phase = varargin{4};
+            end
+            
+            % Resort object by frequencies
+            obj = obj.sortByFreq();
+        end
+        
+        function obj = removeComponents(obj, componentNumbers)
+            % Removes the component(s) given their index number
+            obj.area(componentNumbers) = [];
+            obj.freq(componentNumbers) = [];
+            obj.fwhm(componentNumbers) = [];
+            obj.phase(componentNumbers) = [];
+            
+            %Delete confidence intervals if they exist
+            obj.ci_area = [];
+            obj.ci_freq = [];
+            obj.ci_fwhm = [];
+            obj.ci_phase = [];
+        end
+        
+        function obj = sortByFreq(obj)
+            % Sorts all components by thier frequencies in decending order
+            [sortFreq sortIdx] = sort(obj.freq, 'descend');
+            
+            % Sort fits
+            obj.area = obj.area(sortIdx);
+            obj.freq = sortFreq;
+            obj.fwhm = obj.fwhm(sortIdx);
+            obj.phase = obj.phase(sortIdx);
+            
+            % Sort confidence intervals
+            if(~isempty(obj.ci_area))
+                obj.ci_area = obj.ci_area(sortIdx,:);
+                obj.ci_freq = obj.ci_freq(sortIdx,:);
+                obj.ci_fwhm = obj.ci_fwhm(sortIdx,:);
+                obj.ci_phase = obj.ci_phase(sortIdx,:);
+            end
+        end
+        
+        function obj = addComponents(obj,area, frequency, fwhm, phase)
+            % Adds component(s) to NMR_Mix object, then resorts to keep
+            % frequencies in order
+            obj.area = [obj.area area(:)'];
+            obj.freq = [obj.freq frequency(:)'];
+            obj.fwhm = [obj.fwhm fwhm(:)'];
+            obj.phase = [obj.phase phase(:)'];
+            
+            %Delete confidence intervals if they exist
+            obj.ci_area = [];
+            obj.ci_freq = [];
+            obj.ci_fwhm = [];
+            obj.ci_phase = [];
+            
+            % Resort object by frequencies
+            obj = obj.sortByFreq();
         end
         
         function obj = setBounds(obj, area_lb, area_ub, freq_lb, freq_ub,...
                 fwhm_lb, fwhm_ub, phase_lb, phase_ub)
-            % Sets the constraints for fitting this NMR_Fit object. 
+            % Sets the constraints for fitting this NMR_Fit object.
             % Adding additional components to the NMR_Fit will erase the
-            % bounds, so only add bounds immediately before you fit the 
+            % bounds, so only add bounds immediately before you fit the
             % signal..
             obj.ub = [area_ub(:)'; freq_ub(:)'; fwhm_ub(:)'; phase_ub(:)'];
             obj.lb = [area_lb(:)'; freq_lb(:)'; fwhm_lb(:)'; phase_lb(:)'];
@@ -96,12 +179,24 @@ classdef NMR_Fit < NMR_Mix
             % if line broadening is used, this method subtracts off the
             % line broadening from the fitted values, thus reporting them
             % as if there was no line broadening applied
-            disp('area (arbs)  Freq (Hz)  Linewidth(Hz)  Phase(degrees)');
-            for iComp = 1:length(obj.area)
-                disp([sprintf('%8.3e',obj.area(iComp)) ' ' ...
-                    sprintf('%+8.2f',obj.freq(iComp))  '  ' ...
-                    sprintf('%8.2f',obj.fwhm(iComp)-obj.lineBroadening) '  ' ...
-                    sprintf('%+9.2f',obj.phase(iComp))]);
+            if(~isempty(obj.ci_area))
+                disp('95% confidence intervals are shown in parentheses');
+                disp('area (arbs)                               Freq (Hz)                      Linewidth(Hz)                   Phase(degrees)');
+                for iComp = 1:length(obj.area)
+                    disp([sprintf('%8.3e',obj.area(iComp)) ' (' sprintf('%8.3e',min(obj.ci_area(iComp,:))) ':' sprintf('%8.3e',max(obj.ci_area(iComp,:))) ')   ' ...
+                        sprintf('%+8.2f',obj.freq(iComp)) ' (' sprintf('%+8.2f',min(obj.ci_freq(iComp,:))) ':' sprintf('%+8.2f',max(obj.ci_freq(iComp,:))) ')   ' ...
+                        sprintf('%8.2f',obj.fwhm(iComp)-obj.lineBroadening) ' (' sprintf('%8.2f',min(obj.ci_fwhm(iComp,:))-obj.lineBroadening) ':' sprintf('%8.2f',max(obj.ci_fwhm(iComp,:))-obj.lineBroadening) ')   ' ...
+                        sprintf('%+9.2f',obj.phase(iComp))  ' (' sprintf('%+9.2f',min(obj.ci_phase(iComp,:))) ':' sprintf('%+9.2f',max(obj.ci_phase(iComp,:))) ')' ...
+                        ]);
+                end
+            else
+                disp('area (arbs)  Freq (Hz)  Linewidth(Hz)  Phase(degrees)');
+                for iComp = 1:length(obj.area)
+                    disp([sprintf('%8.3e',obj.area(iComp)) ' ' ...
+                        sprintf('%+8.2f',obj.freq(iComp))  '  ' ...
+                        sprintf('%8.2f',obj.fwhm(iComp)-obj.lineBroadening) '  ' ...
+                        sprintf('%+9.2f',obj.phase(iComp))]);
+                end
             end
         end
     end

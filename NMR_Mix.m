@@ -28,7 +28,7 @@ classdef NMR_Mix < handle
             obj = obj.addComponents(area, freq, fwhm, phase);
         end
         
-        function obj = resetComponents(obj,area, frequency, fwhm, phase)
+        function obj = resetComponents(obj,area, frequency, fwhm, phase, varargin)
             % Resets component(s) to NMR_Mix object, then resorts to keep
             % frequencies in order
             obj.area = area(:)';
@@ -63,6 +63,8 @@ classdef NMR_Mix < handle
         function obj = sortByFreq(obj)
             % Sorts all components by thier frequencies in decending order
             [sortFreq sortIdx] = sort(obj.freq, 'descend');
+            
+            % Sort fits
             obj.area = obj.area(sortIdx);
             obj.freq = sortFreq;
             obj.fwhm = obj.fwhm(sortIdx);
@@ -130,6 +132,23 @@ classdef NMR_Mix < handle
                 spectralDomainSignal = spectralDomainSignal + ...
                     obj.area(iComp)*exp(1i*pi/180*obj.phase(iComp))./...
                     (1i*2*pi*(f-obj.freq(iComp))+pi*obj.fwhm(iComp));
+            end
+        end
+        
+        function timeDomainComponentLorentzianSignal = calcTimeDomainComponentLorentzianSignal(obj,t)
+            % Calculates time domain signal of unphase lorenzian signals 
+            % of each NMR component at the given spectral frequencies 
+            % (f is in Hz). The lorentzians are just the real part of the 
+            % spectrum.
+            % Note, this function returns a curve for each individual
+            % component. The overall "mix" of time domain lorentzian curves 
+            % can be obtained with calcTimeDomainLorentzianSignal.           
+            nTimePoints = length(t);
+            nComp = length(obj.area);
+            timeDomainComponentLorentzianSignal = zeros(nTimePoints,nComp);
+            for iComp=1:nComp
+                timeDomainComponentLorentzianSignal(:,iComp) = obj.area(iComp)* ...
+                    exp(-pi*abs(t)*obj.fwhm(iComp) + 1i*2*pi*t*obj.freq(iComp));
             end
         end
         
