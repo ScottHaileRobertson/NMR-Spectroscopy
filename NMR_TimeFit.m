@@ -147,10 +147,17 @@ classdef NMR_TimeFit < NMR_Fit
 
             % Separate out the components from the matrix
             fit_vec = fit_params(1,:).*exp(1i*pi*fit_params(4,:)/180);
-            fit_area = abs(fit_vec);
+            fit_area = abs(fit_vec); % Prevents neg amp
+%             fit_phase = angle(fit_vec)*180/pi; % Handles neg amp
+            
+%             fit_area = fit_params(1,:); %
             fit_freq = fit_params(2,:);
             fit_fwhm = fit_params(3,:);
-            fit_phase = angle(fit_vec)*180/pi;
+%             if(fit_params(4,:) ~= atan2(imag(fit_vec), real(fit_vec))*180/pi)
+%                 test = atan2(imag(fit_vec), real(fit_vec))*180/pi
+%                 stophere = 1;
+%             end
+            fit_phase = atan2(imag(fit_vec), real(fit_vec))*180/pi; % Handles neg amp
             
              % Calculate 95% confidence interval using jacobian
             ci = nlparci(fit_params,residual,'jacobian',J);
@@ -252,13 +259,13 @@ classdef NMR_TimeFit < NMR_Fit
             hold off;
             xlabel('Spectral Frequency (Hz)');
             ylabel('Imaginary Intensity');
-            legend('Measured','Fitted','Residual');
+%             legend('Measured','Fitted','Residual');
             set(ax5,'XDir','reverse');
             
            
             ax1 = subplot(4,1,1);
             plot(fMat,real(individualSpectrums),'Linewidth',2);
-            legend(legendStrings);
+%             legend(legendStrings);
             ylabel('Component Intensity');
             set(ax1,'xticklabel',{[]}) ;
             set(ax1,'XDir','reverse');

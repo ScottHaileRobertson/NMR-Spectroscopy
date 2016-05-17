@@ -152,9 +152,9 @@ classdef NMR_Fit < NMR_Mix
                 error('Impossible constraint set.');
             end
             if(any(obj.area < obj.lb(1,:)) | any(obj.area > obj.ub(1,:)))
-                error('Bad area bound');
                 lbbad = obj.area < obj.lb(1,:)
                 ubbad = obj.area > obj.ub(1,:)
+                error('Bad area bound');
             end
             if(any(obj.freq < obj.lb(2,:)) | any(obj.freq > obj.ub(2,:)))
                 lbbad = obj.freq < obj.lb(2,:)
@@ -179,17 +179,17 @@ classdef NMR_Fit < NMR_Mix
             % if line broadening is used, this method subtracts off the
             % line broadening from the fitted values, thus reporting them
             % as if there was no line broadening applied
-            if(~isempty(obj.ci_area))
-                disp('95% confidence intervals are shown in parentheses');
-                disp('area (arbs)                               Freq (Hz)                      Linewidth(Hz)                   Phase(degrees)');
-                for iComp = 1:length(obj.area)
-                    disp([sprintf('%8.3e',obj.area(iComp)) ' (' sprintf('%8.3e',min(obj.ci_area(iComp,:))) ':' sprintf('%8.3e',max(obj.ci_area(iComp,:))) ')   ' ...
-                        sprintf('%+8.2f',obj.freq(iComp)) ' (' sprintf('%+8.2f',min(obj.ci_freq(iComp,:))) ':' sprintf('%+8.2f',max(obj.ci_freq(iComp,:))) ')   ' ...
-                        sprintf('%8.2f',obj.fwhm(iComp)-obj.lineBroadening) ' (' sprintf('%8.2f',min(obj.ci_fwhm(iComp,:))-obj.lineBroadening) ':' sprintf('%8.2f',max(obj.ci_fwhm(iComp,:))-obj.lineBroadening) ')   ' ...
-                        sprintf('%+9.2f',obj.phase(iComp))  ' (' sprintf('%+9.2f',min(obj.ci_phase(iComp,:))) ':' sprintf('%+9.2f',max(obj.ci_phase(iComp,:))) ')' ...
-                        ]);
-                end
-            else
+%             if(~isempty(obj.ci_area))
+%                 disp('95% confidence intervals are shown in parentheses');
+%                 disp('area (arbs)                               Freq (Hz)                      Linewidth(Hz)                   Phase(degrees)');
+%                 for iComp = 1:length(obj.area)
+%                     disp([sprintf('%8.3e',obj.area(iComp)) ' (' sprintf('%8.3e',min(obj.ci_area(iComp,:))) ':' sprintf('%8.3e',max(obj.ci_area(iComp,:))) ')   ' ...
+%                         sprintf('%+8.2f',obj.freq(iComp)) ' (' sprintf('%+8.2f',min(obj.ci_freq(iComp,:))) ':' sprintf('%+8.2f',max(obj.ci_freq(iComp,:))) ')   ' ...
+%                         sprintf('%8.2f',obj.fwhm(iComp)-obj.lineBroadening) ' (' sprintf('%8.2f',min(obj.ci_fwhm(iComp,:))-obj.lineBroadening) ':' sprintf('%8.2f',max(obj.ci_fwhm(iComp,:))-obj.lineBroadening) ')   ' ...
+%                         sprintf('%+9.2f',obj.phase(iComp))  ' (' sprintf('%+9.2f',min(obj.ci_phase(iComp,:))) ':' sprintf('%+9.2f',max(obj.ci_phase(iComp,:))) ')' ...
+%                         ]);
+%                 end
+%             else
                 disp('area (arbs)  Freq (Hz)  Linewidth(Hz)  Phase(degrees)');
                 for iComp = 1:length(obj.area)
                     disp([sprintf('%8.3e',obj.area(iComp)) ' ' ...
@@ -197,7 +197,7 @@ classdef NMR_Fit < NMR_Mix
                         sprintf('%8.2f',obj.fwhm(iComp)-obj.lineBroadening) '  ' ...
                         sprintf('%+9.2f',obj.phase(iComp))]);
                 end
-            end
+%             end
         end
     end
 end
