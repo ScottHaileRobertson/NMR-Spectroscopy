@@ -132,16 +132,16 @@ classdef NMR_TimeFit < NMR_Fit
             fitoptions.Display = 'off';
             fitoptions.MaxIter = 10000;
             fitoptions.TolFun=1E-900;
-            fitoptions.TolX = 1E-15;
+            fitoptions.TolX = 1E-20;
             fitoptions.FinDiffType = 'central';
             fitoptions.Algorithm = 'trust-region-reflective';
-            fitoptions.MaxFunEvals = 5000;
+            fitoptions.MaxFunEvals = 10000;
             
             % Put all components into a single matrix
             guess = [obj.area; obj.freq; ...
                 obj.fwhm; obj.phase];
             
-            [fit_params,resnorm,residual,exitflag,output,lambda,J] = lsqcurvefit(@obj.calcConstrainedTimeSig,guess,obj.t,...
+                        [fit_params,resnorm,residual,exitflag,output,lambda,J] = lsqcurvefit(@obj.calcConstrainedTimeSig,guess,obj.t,...
                 [real(obj.timeDomainSignal),imag(obj.timeDomainSignal)],...
                 obj.lb,obj.ub,fitoptions);
 
@@ -218,7 +218,8 @@ classdef NMR_TimeFit < NMR_Fit
             zeroPaddedFreq = zeroPaddedFreq(1:(end-1)); % Take off last sample to have nSamples
             zeroPaddedFreq = zeroPaddedFreq(:); % Make a column vector
             
-            fittedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(zeroPaddedTime)));
+            fittedZeroPaddedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(zeroPaddedTime)));
+            fittedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(obj.t)));
             individualSpectrums = dwell_time*fftshift(fft(obj.calcComponentTimeDomainSignal(zeroPaddedTime),[],1),1);
             residualSpectrum = obj.spectralDomainSignal - fittedSpectrum;
             
@@ -232,30 +233,30 @@ classdef NMR_TimeFit < NMR_Fit
             
             % Show results to user
             ax2 = subplot(4,1,2);
-            plot(zeroPaddedFreq,abs(obj.spectralDomainSignal),'.k','markersize',16);
+            plot(obj.f,abs(obj.spectralDomainSignal),'.k','markersize',16);
             hold on;
-            plot(zeroPaddedFreq,abs(fittedSpectrum),'-g','Linewidth',2);
-            plot(zeroPaddedFreq,abs(residualSpectrum),'.r','markersize',8);
+            plot(zeroPaddedFreq,abs(fittedZeroPaddedSpectrum),'-g','Linewidth',2);
+            plot(obj.f,abs(residualSpectrum),'.r','markersize',8);
             hold off;
             ylabel('Magnitude Intensity');
             set(ax2,'xticklabel',{[]}) ;
             set(ax2,'XDir','reverse');
             
             ax4 = subplot(4,1,3);
-            plot(zeroPaddedFreq,real(obj.spectralDomainSignal),'.k','markersize',16);
+            plot(obj.f,real(obj.spectralDomainSignal),'.k','markersize',16);
             hold on;
-            plot(zeroPaddedFreq,real(fittedSpectrum),'-g','Linewidth',2);
-            plot(zeroPaddedFreq,real(residualSpectrum),'.r','markersize',8);
+            plot(zeroPaddedFreq,real(fittedZeroPaddedSpectrum),'-g','Linewidth',2);
+            plot(obj.f,real(residualSpectrum),'.r','markersize',8);
             hold off;
             ylabel('Real Intensity');
             set(ax4,'xticklabel',{[]});
             set(ax4,'XDir','reverse');
             
             ax5 = subplot(4,1,4);
-            plot(zeroPaddedFreq,imag(obj.spectralDomainSignal),'.k','markersize',16);
+            plot(obj.f,imag(obj.spectralDomainSignal),'.k','markersize',16);
             hold on;
-            plot(zeroPaddedFreq,imag(fittedSpectrum),'-g','Linewidth',2);
-            plot(zeroPaddedFreq,imag(residualSpectrum),'.r','markersize',8);
+            plot(zeroPaddedFreq,imag(fittedZeroPaddedSpectrum),'-g','Linewidth',2);
+            plot(obj.f,imag(residualSpectrum),'.r','markersize',8);
             hold off;
             xlabel('Spectral Frequency (Hz)');
             ylabel('Imaginary Intensity');
@@ -279,12 +280,13 @@ classdef NMR_TimeFit < NMR_Fit
             dwell_time = (obj.t(2)-obj.t(1));
             zeroPaddedTime = min(obj.t(:)) + dwell_time*((1:obj.zeroPadSize)-1)';
             individualSignals = obj.calcComponentTimeDomainSignal(zeroPaddedTime);
-            fittedSignal = obj.calcTimeDomainSignal(zeroPaddedTime);
+            fittedZeroPaddedSignal = obj.calcTimeDomainSignal(zeroPaddedTime);
+            fittedSignal = obj.calcTimeDomainSignal(obj.t);
             residualSignal = obj.timeDomainSignal - fittedSignal;
             
             % Calculate lorentzian curves for each component
             nComponents = length(obj.area);
-            fMat = repmat(zeroPaddedTime,[1 nComponents]);
+            tMat = repmat(zeroPaddedTime,[1 nComponents]);
             
             legendStrings = cell(1, nComponents);
             for iComp=1:nComponents
@@ -293,10 +295,10 @@ classdef NMR_TimeFit < NMR_Fit
             
             % Show results to user
             ax2 = subplot(4,1,2);
-            plot(zeroPaddedTime,abs(obj.timeDomainSignal),'-b');
+            plot(obj.t,abs(obj.timeDomainSignal),'.k','markersize',16);
             hold on;
-            plot(zeroPaddedTime,abs(fittedSignal),'-g');
-            plot(zeroPaddedTime,abs(residualSignal),'-r');
+            plot(zeroPaddedTime,abs(fittedZeroPaddedSignal),'-g','Linewidth',2);
+            plot(obj.t,abs(residualSignal),'.r','markersize',8);
             hold off;
             ylabel('Magnitude Intensity');
             set(ax2,'xticklabel',{[]}) ;
@@ -315,19 +317,19 @@ classdef NMR_TimeFit < NMR_Fit
             %             set(ax3,'xticklabel',{[]}) ;
             
             ax4 = subplot(4,1,3);
-            plot(zeroPaddedTime,real(obj.timeDomainSignal),'-b');
+            plot(obj.t,real(obj.timeDomainSignal),'.k','markersize',16);
             hold on;
-            plot(zeroPaddedTime,real(fittedSignal),'-g');
-            plot(zeroPaddedTime,real(residualSignal),'-r');
+            plot(zeroPaddedTime,real(fittedZeroPaddedSignal),'-g','Linewidth',2);
+            plot(obj.t,real(residualSignal),'.r','markersize',8);
             hold off;
             ylabel('Real Intensity');
             set(ax4,'xticklabel',{[]});
             
             ax5 = subplot(4,1,4);
-            plot(zeroPaddedTime,imag(obj.timeDomainSignal),'-b');
+            plot(obj.t,imag(obj.timeDomainSignal),'.k','markersize',16);
             hold on;
-            plot(zeroPaddedTime,imag(fittedSignal),'-g');
-            plot(zeroPaddedTime,imag(residualSignal),'-r');
+            plot(zeroPaddedTime,imag(fittedZeroPaddedSignal),'-g','Linewidth',2);
+            plot(obj.t,imag(residualSignal),'.r','markersize',8);
             hold off;
             xlabel('Time');
             ylabel('Imaginary Intensity');
@@ -345,7 +347,7 @@ classdef NMR_TimeFit < NMR_Fit
             ax1 = subplot(4,1,1);
             %             end
             
-            plot(fMat,real(individualSignals));
+            plot(tMat,real(individualSignals));
             legend(legendStrings);
             ylabel('Component Intensity');
             set(ax1,'xticklabel',{[]}) ;

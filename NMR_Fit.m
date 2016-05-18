@@ -32,7 +32,6 @@ classdef NMR_Fit < NMR_Mix
             obj = obj@NMR_Mix(area,freq,fwhm,phase);
             
             obj.t = t(:); % make a column vector
-            nSamples = length(obj.t);
             
             % Default line broadening is zero
             obj.lineBroadening = line_broadening;
@@ -47,16 +46,16 @@ classdef NMR_Fit < NMR_Mix
             % Default zero padding is none
             obj.zeroPadSize = zeroPadSize;
             if(isempty(obj.zeroPadSize))
-                obj.zeroPadSize = nSamples;
+                obj.zeroPadSize = length(obj.t);
             end
             
             % Calculate spectrum
             dwell_time = (obj.t(2)-obj.t(1));
             obj.spectralDomainSignal = dwell_time...
-                *fftshift(fft(obj.timeDomainSignal,obj.zeroPadSize));
-            
+                *fftshift(fft(obj.timeDomainSignal));
+                   
             % Calculate freq samples
-            obj.f = linspace(-0.5,0.5,obj.zeroPadSize+1)/dwell_time;
+            obj.f = linspace(-0.5,0.5,length(obj.spectralDomainSignal)+1)/dwell_time;
             obj.f = obj.f(1:(end-1)); % Take off last sample to have nSamples
             obj.f = obj.f(:); % Make a column vector
             
@@ -176,9 +175,9 @@ classdef NMR_Fit < NMR_Mix
             end
             if(any(obj.phase < obj.lb(4,:)) | any(obj.phase > obj.ub(4,:)))
                 lbbad = obj.phase < obj.lb(4,:)
-                obj.phase(lbbad) = obj.lb(b,lbbad);
+                obj.phase(lbbad) = obj.lb(4,lbbad);
                 ubbad = obj.phase > obj.ub(4,:)
-                obj.phase(ubbad) = obj.ub(b,ubbad);
+                obj.phase(ubbad) = obj.ub(4,ubbad);
                 warning('Bad phase bound');
             end
         end

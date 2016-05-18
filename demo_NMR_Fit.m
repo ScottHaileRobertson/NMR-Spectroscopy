@@ -38,6 +38,8 @@ disp('Fits without any guessses:');
 nmrFit.describe();
 figure();
 nmrFit.plotFit();
+figure();
+nmrFit.plotTimeFit();
 
 %% Fitting Option 2 (works well when you have little prior knowledge)
 % Use a interactive fitting tool to guide the fitting
@@ -50,6 +52,8 @@ disp('Fits using fitTool:');
 nmrFit2.describe();
 figure();
 nmrFit2.plotFit();
+figure();
+nmrFit2.plotTimeFit();
 
 %% Fitting Option 3 (works really well, but requires prior knowledge)
 % Now lets assume we had decent guesses of the frequencies and fwhms, lets 
@@ -69,6 +73,8 @@ disp('Fits with reasonable guessses:');
 nmrFit3.describe();
 figure();
 nmrFit3.plotFit();
+figure();
+nmrFit3.plotTimeFit();
 
 %% Fitting Option 4 (best, but requires lots of prior knowledge)
 % We can also constrain the fits to only allow parameters to vary within
@@ -80,7 +86,7 @@ disp('Using automated fitting with decent starting guesses...')
 % constraint
 area_guess = [1 1 1]; 
 area_lowerBounds = [0 0 0]; % Always positive
-area_upperBounds = [inf inf inf]; % Make it finite
+area_upperBounds = 1E10*[1 1 1]; % Make it finite, but huge
 
 % Provide freq guesses and constraints
 freq_guess = [390 32 -4100];
@@ -89,28 +95,33 @@ freq_upperBounds = [500 100 -3000];
 
 % Provide fwhm guesses and constraints
 fwhm_guesses = [320 193 104];
-fwhm_lowerBounds = [250 150 50];
-fwhm_upperBounds = [350 250 150];
+fwhm_lowerBounds = [0 0 0];
+fwhm_upperBounds = inf*[1 1 1];
 
 % I tend to not constrain the phase (allow -inf to inf)
-phase_guesses = [0 0 0];
-phase_lowerBounds = [-inf -inf -inf];
-phase_upperBounds = [inf inf inf];
+phase_guesses = [1 1 1];
+phase_lowerBounds = -inf*[1 1 1];
+phase_upperBounds = inf*[1 1 1];
 
-% Create Fit object, set bounds, then fit
-nmrFit3 = NMR_TimeFit(noisySignal,t,...
+% Create Fit object, then get a rough fit
+nmrFit4 = NMR_TimeFit(noisySignal,t,...
     area_guess,freq_guess,fwhm_guesses,phase_guesses,...
     linebroadening,zeroPadSize);
-nmrFit3 = nmrFit3.setBounds(area_lowerBounds,area_upperBounds,...
+nmrFit4 = nmrFit4.fitTimeDomainSignal();
+
+% Set constraint bounds, then re-fit
+nmrFit4 = nmrFit4.setBounds(area_lowerBounds,area_upperBounds,...
     freq_lowerBounds,freq_upperBounds,...
     fwhm_lowerBounds,fwhm_upperBounds,...
     phase_lowerBounds,phase_upperBounds);
-nmrFit3 = nmrFit3.fitTimeDomainSignal();
+nmrFit4 = nmrFit4.fitTimeDomainSignal();
 
 % Describe and show the fit
 disp('Fits with reasonable guessses and constraints:');
-nmrFit3.describe();
+nmrFit4.describe();
 figure()
-nmrFit3.plotFit();
+nmrFit4.plotFit();
+figure();
+nmrFit4.plotTimeFit();
 % Note that the these methods often agree well with high SNR data, but be 
 % aware that the automatic fitting sometimes has trouble "finding" a peak
