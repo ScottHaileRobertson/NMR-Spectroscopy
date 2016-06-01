@@ -219,5 +219,11 @@ classdef NMR_Mix < handle
                     ((2*pi*(obj.freq(iComp)-f)).^2+(pi*obj.fwhm(iComp))^2);
             end
         end
+        
+        function estSNRdB = estimateSNR(obj)
+            fitSignal = obj.calcTimeDomainSignal(obj.t);
+            fitNoise = fitSignal - obj.timeDomainSignal;
+            estSNRdB = snr(fitSignal, fitNoise);
+        end
     end
 end
