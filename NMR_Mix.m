@@ -71,6 +71,11 @@ classdef NMR_Mix < handle
             obj.phase = obj.phase(sortIdx);
         end
         
+        function obj = applyGlobalPhaseShift(obj, phaseShiftInDegrees)
+            % Phase to RBC peak at first TE
+            obj.phase = obj.phase+phaseShiftInDegrees;
+        end
+        
         function componentTimeDomainSignal = calcComponentTimeDomainSignal(obj,t)
             % Calculates the time domain signal from the individual components
             % of the NMR mix at the given time points (t is in sec). Note, 

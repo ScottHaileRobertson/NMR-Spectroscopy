@@ -23,6 +23,15 @@ classdef NMR_Fit < NMR_Mix
     end
     
     methods
+        function obj = applyGlobalPhaseShift(obj, phaseShiftInDegrees)
+            % Call super class to change NMR_Mix object
+            obj = applyGlobalPhaseShift@NMR_Mix(obj,phaseShiftInDegrees);
+            
+            % Adjust time domain signal
+            obj.timeDomainSignal = exp(pi*1i*phaseShiftInDegrees/180)*obj.timeDomainSignal;
+            obj.spectralDomainSignal = exp(pi*1i*phaseShiftInDegrees/180)*obj.spectralDomainSignal;
+        end
+        
         function obj = NMR_Fit(time_domain_signal, t, ...
                 area, freq, fwhm, phase, line_broadening, zeroPadSize)
             % Constructs a fitting object. Note - this does not perform the
