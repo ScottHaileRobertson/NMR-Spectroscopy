@@ -148,17 +148,43 @@ classdef NMR_TimeFit < NMR_Fit
             % Separate out the components from the matrix
             fit_vec = fit_params(1,:).*exp(1i*pi*fit_params(4,:)/180);
             fit_area = abs(fit_vec); % Prevents neg amp
-%             fit_phase = angle(fit_vec)*180/pi; % Handles neg amp
-            
-%             fit_area = fit_params(1,:); %
             fit_freq = fit_params(2,:);
             fit_fwhm = fit_params(3,:);
-%             if(fit_params(4,:) ~= atan2(imag(fit_vec), real(fit_vec))*180/pi)
-%                 test = atan2(imag(fit_vec), real(fit_vec))*180/pi
-%                 stophere = 1;
-%             end
             fit_phase = atan2(imag(fit_vec), real(fit_vec))*180/pi; % Handles neg amp
             
+            %% Check that no aliased frequencies were detected, if so correct them
+            maxBW = max(obj.f)-min(obj.f);
+            halfBW = 0.5*maxBW;
+            aliasedIdx = find(abs(fit_freq)>halfBW);
+            nAliased = length(aliasedIdx);
+            while(nAliased > 0)
+                for iAliased =1:nAliased
+                    idxAliased = aliasedIdx(iAliased);
+                    while(fit_freq(idxAliased)<-halfBW)
+                        fit_freq(idxAliased) = fit_freq(idxAliased)+ maxBW;
+                    end
+                    while(fit_freq(idxAliased)>halfBW)
+                        fit_freq(idxAliased) = fit_freq(idxAliased)- maxBW;
+                    end
+                end
+                
+                % Fit again
+                guess = [fit_area; fit_freq; fit_fwhm; fit_phase];
+                [fit_params,resnorm,residual,exitflag,output,lambda,J] = lsqcurvefit(@obj.calcConstrainedTimeSig,guess,obj.t,...
+                    [real(obj.timeDomainSignal),imag(obj.timeDomainSignal)],...
+                    obj.lb,obj.ub,fitoptions);
+
+                % Separate out the components from the matrix
+                fit_vec = fit_params(1,:).*exp(1i*pi*fit_params(4,:)/180);
+                fit_area = abs(fit_vec); % Prevents neg amp
+                fit_freq = fit_params(2,:);
+                fit_fwhm = fit_params(3,:);
+                fit_phase = atan2(imag(fit_vec), real(fit_vec))*180/pi; % Handles neg amp
+                
+                aliasedIdx = find(abs(fit_freq)>halfBW);
+                nAliased = length(aliasedIdx);
+            end
+
              % Calculate 95% confidence interval using jacobian
             ci = nlparci(fit_params,residual,'jacobian',J);
             ci = reshape(ci,[size(fit_params) 2]);

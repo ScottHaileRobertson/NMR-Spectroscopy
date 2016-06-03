@@ -153,7 +153,7 @@ classdef NMR_Mix < handle
             timeDomainComponentLorentzianSignal = zeros(nTimePoints,nComp);
             for iComp=1:nComp
                 timeDomainComponentLorentzianSignal(:,iComp) = obj.area(iComp)* ...
-                    exp(-pi*abs(t)*obj.fwhm(iComp) + 1i*2*pi*t*obj.freq(iComp));
+                    exp(-pi*t*obj.fwhm(iComp) + 1i*2*pi*t*obj.freq(iComp));
             end
         end
         
