@@ -25,10 +25,6 @@ classdef NMR_TimeFit < NMR_Fit
             % Use the magnitude of the residual freq domain signal to
             % make a guess of the next peaks frequency
             
-            
-            
-            
-            
             % If there are already components, fit them first, then
             % subtract them to get the residual spectrum
             if(~isempty(obj.area))
@@ -106,7 +102,7 @@ classdef NMR_TimeFit < NMR_Fit
             continueFitting = true;
             while(continueFitting)
                 % Create temporary NRM_Fix object and add newest component
-                tempFit = obj;
+                tempFit = obj.copyFitObject();
                 tempFit = tempFit.autoAddComponent();
                 
                 % Show fit
@@ -118,13 +114,32 @@ classdef NMR_TimeFit < NMR_Fit
                 % If user wants to keep component, add it to the object
                 output_str1 = lower(input('Keep fit? [y/n]','s'));
                 keepFit = length(findstr(output_str1, 'y')>0);
-                if(keepFit)
-                    obj = tempFit;
+                if(keepFit) 
+                    obj = tempFit.copyFitObject();
+                    
+                    % If user wants to fit more peaks, continue fitting...
+                    output_str2 = lower(input('\tFit more peaks? [y/n]','s'));
+                    continueFitting = length(findstr(output_str2, 'y')>0);
+                else
+                    % Assume user is done since they didnt like the last
+                    % fit
+                    continueFitting = 0;
                 end
-                
-                % If user wants to fit more peaks, continue fitting...
-                output_str2 = lower(input('\tFit more peaks? [y/n]','s'));
-                continueFitting = length(findstr(output_str2, 'y')>0);
+            end
+        end
+        
+        function copyObj = copyFitObject(obj)
+            % Undo linebroadening
+            timeSig = obj.timeDomainSignal.*exp(pi*obj.lineBroadening*obj.t); 
+            
+            % Create object
+            copyObj = NMR_TimeFit(timeSig, obj.t, ...
+                obj.area, obj.freq, obj.fwhm, obj.phase, obj.lineBroadening , obj.zeroPadSize);
+
+            % Set bounds
+            if(~isempty(obj.ub))
+                copyObj.ub = obj.ub;
+                copyObj.lb = obj.lb;
             end
         end
         
