@@ -160,34 +160,36 @@ classdef NMR_Fit < NMR_Mix
                 error('Impossible constraint set.');
             end
             % Force guesses to be within constraints
-            if(any(obj.area < obj.lb(1,:)) | any(obj.area > obj.ub(1,:)))
-                lbbad = obj.area < obj.lb(1,:)
-                obj.area(lbbad) = obj.lb(1,lbbad);
-                ubbad = obj.area > obj.ub(1,:)
-                obj.area(ubbad) = obj.ub(1,ubbad);
-                warning('Bad area bound');
-            end
-            if(any(obj.freq < obj.lb(2,:)) | any(obj.freq > obj.ub(2,:)))
-                lbbad = obj.freq < obj.lb(2,:)
-                obj.freq(lbbad) = obj.lb(2,lbbad);
-                ubbad = obj.freq > obj.ub(2,:)
-                obj.freq(ubbad) = obj.ub(2,ubbad);
-                warning('Bad freq bound');
-            end
-            if(any(obj.fwhm < obj.lb(3,:)) | any(obj.fwhm > obj.ub(3,:)))
-                lbbad = obj.fwhm < obj.lb(3,:)
-                obj.fwhm(lbbad) = obj.lb(3,lbbad);
-                
-                ubbad = obj.fwhm > obj.ub(3,:)
-                obj.fwhm(ubbad) = obj.ub(3,ubbad);
-                warning('Bad fwhm bound');
-            end
-            if(any(obj.phase < obj.lb(4,:)) | any(obj.phase > obj.ub(4,:)))
-                lbbad = obj.phase < obj.lb(4,:)
-                obj.phase(lbbad) = obj.lb(4,lbbad);
-                ubbad = obj.phase > obj.ub(4,:)
-                obj.phase(ubbad) = obj.ub(4,ubbad);
-                warning('Bad phase bound');
+            if(~isempty(obj.area))
+                if(any(obj.area < obj.lb(1,:)) | any(obj.area > obj.ub(1,:)))
+                    lbbad = obj.area < obj.lb(1,:)
+                    obj.area(lbbad) = obj.lb(1,lbbad);
+                    ubbad = obj.area > obj.ub(1,:)
+                    obj.area(ubbad) = obj.ub(1,ubbad);
+                    warning('Bad area bound');
+                end
+                if(any(obj.freq < obj.lb(2,:)) | any(obj.freq > obj.ub(2,:)))
+                    lbbad = obj.freq < obj.lb(2,:)
+                    obj.freq(lbbad) = obj.lb(2,lbbad);
+                    ubbad = obj.freq > obj.ub(2,:)
+                    obj.freq(ubbad) = obj.ub(2,ubbad);
+                    warning('Bad freq bound');
+                end
+                if(any(obj.fwhm < obj.lb(3,:)) | any(obj.fwhm > obj.ub(3,:)))
+                    lbbad = obj.fwhm < obj.lb(3,:)
+                    obj.fwhm(lbbad) = obj.lb(3,lbbad);
+                    
+                    ubbad = obj.fwhm > obj.ub(3,:)
+                    obj.fwhm(ubbad) = obj.ub(3,ubbad);
+                    warning('Bad fwhm bound');
+                end
+                if(any(obj.phase < obj.lb(4,:)) | any(obj.phase > obj.ub(4,:)))
+                    lbbad = obj.phase < obj.lb(4,:)
+                    obj.phase(lbbad) = obj.lb(4,lbbad);
+                    ubbad = obj.phase > obj.ub(4,:)
+                    obj.phase(ubbad) = obj.ub(4,ubbad);
+                    warning('Bad phase bound');
+                end
             end
         end
         

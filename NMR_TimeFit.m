@@ -25,11 +25,19 @@ classdef NMR_TimeFit < NMR_Fit
             % Use the magnitude of the residual freq domain signal to
             % make a guess of the next peaks frequency
             
+            
+            
+            
+            
             % If there are already components, fit them first, then
             % subtract them to get the residual spectrum
             if(~isempty(obj.area))
+                % Calculate spectrum at starting time
+                dwell_time = (obj.t(2)-obj.t(1));
+                
+                % Calculate freq samples
                 residualSpectrum = obj.spectralDomainSignal - ...
-                    obj.calcSpectralDomainSignal(obj.f);
+                    dwell_time*fftshift(fft(obj.calcTimeDomainSignal(obj.t)));
             else
                 residualSpectrum = obj.spectralDomainSignal;
             end
@@ -102,7 +110,7 @@ classdef NMR_TimeFit < NMR_Fit
                 tempFit = tempFit.autoAddComponent();
                 
                 % Show fit
-                tempFit.plotFit();
+                tempFit.plotTimeAndSpectralFit();
                 
                 % Report new fits
                 tempFit.describe();
@@ -127,7 +135,7 @@ classdef NMR_TimeFit < NMR_Fit
             % fitTimeDomainSignal
             
             fitoptions = optimoptions('lsqcurvefit');
-            %                         fitoptions.Display = 'iter-detailed';
+            %                        fitoptions.Display = 'iter-detailed';
             %                         fitoptions.Display = 'final-detailed';
             fitoptions.Display = 'off';
             fitoptions.MaxIter = 10000;
@@ -135,7 +143,7 @@ classdef NMR_TimeFit < NMR_Fit
             fitoptions.TolX = 1E-20;
             fitoptions.FinDiffType = 'central';
             fitoptions.Algorithm = 'trust-region-reflective';
-            fitoptions.MaxFunEvals = 10000;
+            fitoptions.MaxFunEvals = 13000;
             
             % Put all components into a single matrix
             guess = [obj.area; obj.freq; ...
@@ -232,7 +240,119 @@ classdef NMR_TimeFit < NMR_Fit
             realImagSig = [real(complexSig) imag(complexSig)];
         end
         
-        function ax1 = plotFit(obj)
+        function ax1 = plotTimeAndSpectralFit(obj)
+            % Calculate fitted and residual spectrums usign time domain
+            % signal so that amplitudes are correct even if signal is
+            % truncated at the end
+            dwell_time = (obj.t(2)-obj.t(1));
+            zeroPaddedTime = min(obj.t(:)) + dwell_time*((1:obj.zeroPadSize)-1)';
+            
+            % Calculate spectrum
+            zeroPaddedFreq = linspace(-0.5,0.5,obj.zeroPadSize+1)/dwell_time;
+            zeroPaddedFreq = zeroPaddedFreq(1:(end-1)); % Take off last sample to have nSamples
+            zeroPaddedFreq = zeroPaddedFreq(:); % Make a column vector
+            
+            fittedZeroPaddedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(zeroPaddedTime)));
+            fittedSpectrum = dwell_time*fftshift(fft(obj.calcTimeDomainSignal(obj.t)));
+            individualSpectrums = dwell_time*fftshift(fft(obj.calcComponentTimeDomainSignal(zeroPaddedTime),[],1),1);
+            residualSpectrum = obj.spectralDomainSignal - fittedSpectrum;
+            
+            % Calculate fitted and residual spectrums
+            individualSignals = obj.calcComponentTimeDomainSignal(zeroPaddedTime);
+            fittedZeroPaddedSignal = obj.calcTimeDomainSignal(zeroPaddedTime);
+            fittedSignal = obj.calcTimeDomainSignal(obj.t);
+            residualSignal = obj.timeDomainSignal - fittedSignal;
+            
+            
+            nComponents = length(obj.area);
+            fMat = repmat(zeroPaddedFreq,[1 nComponents]);
+            tMat = repmat(zeroPaddedTime,[1 nComponents]);
+            
+            legendStrings = cell(1, nComponents);
+            for iComp=1:nComponents
+                legendStrings{iComp} = ['C\_' sprintf('%03.0f',iComp)];
+            end
+            
+            % Show results to user
+            ax3 = subplot(4,2,3);
+            plot(obj.f,abs(obj.spectralDomainSignal),'.k','markersize',16);
+            hold on;
+            plot(zeroPaddedFreq,abs(fittedZeroPaddedSpectrum),'-g','Linewidth',2);
+            plot(obj.f,abs(residualSpectrum),'.r','markersize',8);
+            hold off;
+            ylabel('Magnitude Intensity');
+            set(ax3,'xticklabel',{[]}) ;
+            set(ax3,'XDir','reverse');
+            
+            ax5 = subplot(4,2,5);
+            plot(obj.f,real(obj.spectralDomainSignal),'.k','markersize',16);
+            hold on;
+            plot(zeroPaddedFreq,real(fittedZeroPaddedSpectrum),'-g','Linewidth',2);
+            plot(obj.f,real(residualSpectrum),'.r','markersize',8);
+            hold off;
+            ylabel('Real Intensity');
+            set(ax5,'xticklabel',{[]});
+            set(ax5,'XDir','reverse');
+            
+            ax7 = subplot(4,2,7);
+            plot(obj.f,imag(obj.spectralDomainSignal),'.k','markersize',16);
+            hold on;
+            plot(zeroPaddedFreq,imag(fittedZeroPaddedSpectrum),'-g','Linewidth',2);
+            plot(obj.f,imag(residualSpectrum),'.r','markersize',8);
+            hold off;
+            xlabel('Spectral Frequency (Hz)');
+            ylabel('Imaginary Intensity');
+%             legend('Measured','Fitted','Residual');
+            set(ax7,'XDir','reverse');
+            
+            ax1 = subplot(4,2,1);
+            plot(fMat,real(individualSpectrums),'Linewidth',2);
+%             legend(legendStrings);
+            ylabel('Component Intensity');
+            set(ax1,'xticklabel',{[]}) ;
+            set(ax1,'XDir','reverse');
+            
+            % Keep all x axes in sinc
+            linkaxes([ax1,ax3,ax5 ax7],'x');   
+            
+            % Show results to user
+            ax4 = subplot(4,2,4);
+            plot(obj.t,abs(obj.timeDomainSignal),'.k','markersize',16);
+            hold on;
+            plot(zeroPaddedTime,abs(fittedZeroPaddedSignal),'-g','Linewidth',2);
+            plot(obj.t,abs(residualSignal),'.r','markersize',8);
+            hold off;
+            ylabel('Magnitude Intensity');
+            set(ax4,'xticklabel',{[]}) ;
+            
+            ax6 = subplot(4,2,6);
+            plot(obj.t,real(obj.timeDomainSignal),'.k','markersize',16);
+            hold on;
+            plot(zeroPaddedTime,real(fittedZeroPaddedSignal),'-g','Linewidth',2);
+            plot(obj.t,real(residualSignal),'.r','markersize',8);
+            hold off;
+            ylabel('Real Intensity');
+            set(ax6,'xticklabel',{[]});
+            
+            ax8 = subplot(4,2,8);
+            plot(obj.t,imag(obj.timeDomainSignal),'.k','markersize',16);
+            hold on;
+            plot(zeroPaddedTime,imag(fittedZeroPaddedSignal),'-g','Linewidth',2);
+            plot(obj.t,imag(residualSignal),'.r','markersize',8);
+            hold off;
+            xlabel('Time');
+            ylabel('Imaginary Intensity');
+            
+            ax2 = subplot(4,2,2);
+            plot(tMat,real(individualSignals));
+            ylabel('Component Intensity');
+            set(ax2,'xticklabel',{[]}) ;
+            
+            % Keep all x axes in sinc
+            linkaxes([ax2,ax4,ax6 ax8],'x');
+        end
+        
+        function ax1 = plotSpectralFit(obj)
             % Calculate fitted and residual spectrums usign time domain
             % signal so that amplitudes are correct even if signal is
             % truncated at the end
